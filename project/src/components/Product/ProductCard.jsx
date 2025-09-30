@@ -11,10 +11,11 @@ import {
   Chip,
   IconButton,
   Tooltip,
-  Zoom,
   alpha,
   useTheme,
   keyframes,
+  Badge,
+  Stack,
 } from '@mui/material';
 import { 
   ShoppingCart, 
@@ -23,16 +24,20 @@ import {
   Favorite,
   LocalOffer,
   TrendingUp,
-  Bolt,
+  FlashOn,
+  Star,
+  Add,
+  CompareArrows,
+  Share,
 } from '@mui/icons-material';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext.jsx';
 import { useCart } from '../../hooks/useCart.jsx';
 
-// Animations
+// Enhanced animations
 const float = keyframes`
   0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-8px); }
+  50% { transform: translateY(-12px); }
 `;
 
 const shimmer = keyframes`
@@ -41,18 +46,34 @@ const shimmer = keyframes`
 `;
 
 const scaleIn = keyframes`
-  from { transform: scale(0); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
+  from { transform: scale(0) rotate(180deg); opacity: 0; }
+  to { transform: scale(1) rotate(0deg); opacity: 1; }
 `;
 
 const slideUp = keyframes`
-  from { transform: translateY(20px); opacity: 0; }
+  from { transform: translateY(30px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
 `;
 
 const pulse = keyframes`
   0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
+  50% { transform: scale(1.1); }
+`;
+
+const glow = keyframes`
+  0%, 100% { 
+    box-shadow: 0 0 10px rgba(102, 126, 234, 0.4), 0 0 20px rgba(102, 126, 234, 0.2);
+  }
+  50% { 
+    box-shadow: 0 0 20px rgba(102, 126, 234, 0.6), 0 0 30px rgba(102, 126, 234, 0.4);
+  }
+`;
+
+const heartBeat = keyframes`
+  0%, 100% { transform: scale(1); }
+  25% { transform: scale(1.2); }
+  50% { transform: scale(1.1); }
+  75% { transform: scale(1.15); }
 `;
 
 function ProductCard({ product }) {
@@ -62,25 +83,31 @@ function ProductCard({ product }) {
   const [isHovered, setIsHovered] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
 
-  const handleAddToCart = () => {
-    addToCart({
+  const handleAddToCart = async () => {
+    setIsAddingToCart(true);
+    await addToCart({
       productId: product.id,
       title: product.title,
       price: product.price,
       image: product.image,
       quantity: 1,
     });
+    setTimeout(() => setIsAddingToCart(false), 1000);
   };
 
   const handleFavoriteToggle = () => {
     setIsFavorite(!isFavorite);
   };
 
-  // Check if product is on sale or trending
+  // Enhanced product analysis
   const isOnSale = product.rating?.rate >= 4.5;
   const isTrending = product.rating?.count > 200;
+  const isNewArrival = Math.random() > 0.7; // Simulate new arrivals
   const discount = isOnSale ? Math.floor(Math.random() * 20 + 10) : 0;
+  const originalPrice = isOnSale ? product.price * (1 + discount / 100) : product.price;
+  const savings = originalPrice - product.price;
 
   return (
     <Card 
@@ -91,23 +118,34 @@ function ProductCard({ product }) {
         display: 'flex', 
         flexDirection: 'column',
         position: 'relative',
-        borderRadius: 4,
+        borderRadius: 5,
         overflow: 'hidden',
         transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
         border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
         background: theme.palette.mode === 'light'
-          ? 'rgba(255, 255, 255, 0.9)'
-          : 'rgba(20, 25, 40, 0.9)',
-        backdropFilter: 'blur(20px)',
+          ? 'rgba(255, 255, 255, 0.95)'
+          : 'rgba(17, 24, 39, 0.95)',
+        backdropFilter: 'blur(20px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(20px) saturate(180%)',
         boxShadow: theme.palette.mode === 'light'
-          ? '0 4px 20px rgba(0, 0, 0, 0.08)'
-          : '0 4px 20px rgba(0, 0, 0, 0.3)',
+          ? '0 8px 32px rgba(0, 0, 0, 0.08)'
+          : '0 8px 32px rgba(0, 0, 0, 0.3)',
         '&:hover': {
-          transform: 'translateY(-12px) scale(1.02)',
+          transform: 'translateY(-16px) scale(1.02)',
           boxShadow: theme.palette.mode === 'light'
-            ? '0 20px 40px rgba(0, 0, 0, 0.15)'
-            : '0 20px 40px rgba(0, 0, 0, 0.6)',
+            ? '0 25px 50px rgba(0, 0, 0, 0.2)'
+            : '0 25px 50px rgba(0, 0, 0, 0.6)',
           border: `1px solid ${alpha(theme.palette.primary.main, 0.3)}`,
+          '& .product-image': {
+            transform: 'scale(1.1) rotate(2deg)',
+          },
+          '& .quick-actions': {
+            opacity: 1,
+            transform: 'translateY(0)',
+          },
+          '& .product-overlay': {
+            opacity: 1,
+          }
         },
         '&::before': {
           content: '""',
@@ -125,20 +163,39 @@ function ProductCard({ product }) {
         }
       }}
     >
-      {/* Badges Container */}
+      {/* Enhanced Badges Container */}
       <Box
         sx={{
           position: 'absolute',
-          top: 12,
-          left: 12,
-          right: 12,
-          zIndex: 2,
+          top: 16,
+          left: 16,
+          right: 16,
+          zIndex: 3,
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'flex-start',
         }}
       >
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+        <Stack spacing={1}>
+          {isNewArrival && (
+            <Chip
+              icon={<FlashOn sx={{ fontSize: 16 }} />}
+              label="New"
+              size="small"
+              sx={{
+                fontWeight: 800,
+                fontSize: '0.7rem',
+                height: 28,
+                background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+                color: 'white',
+                boxShadow: '0 4px 15px rgba(79, 172, 254, 0.4)',
+                animation: `${scaleIn} 0.5s ease-out`,
+                '& .MuiChip-icon': {
+                  color: 'white',
+                }
+              }}
+            />
+          )}
           {isOnSale && (
             <Chip
               icon={<LocalOffer sx={{ fontSize: 16 }} />}
@@ -176,38 +233,84 @@ function ProductCard({ product }) {
               }}
             />
           )}
-        </Box>
+        </Stack>
 
-        {/* Favorite Button */}
-        <Tooltip title={isFavorite ? "Remove from wishlist" : "Add to wishlist"} arrow>
-          <IconButton
-            onClick={handleFavoriteToggle}
-            size="small"
-            sx={{
-              background: 'rgba(255, 255, 255, 0.95)',
-              backdropFilter: 'blur(10px)',
-              boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)',
-              transition: 'all 0.3s ease',
-              '&:hover': {
-                background: 'rgba(255, 255, 255, 1)',
-                transform: 'scale(1.1)',
-              }
-            }}
-          >
-            {isFavorite ? (
-              <Favorite sx={{ fontSize: 20, color: '#fa709a' }} />
-            ) : (
-              <FavoriteBorder sx={{ fontSize: 20, color: theme.palette.text.secondary }} />
-            )}
-          </IconButton>
-        </Tooltip>
+        {/* Enhanced Action Buttons */}
+        <Stack spacing={1} className="quick-actions" sx={{
+          opacity: 0,
+          transform: 'translateY(-10px)',
+          transition: 'all 0.3s ease',
+        }}>
+          <Tooltip title={isFavorite ? "Remove from wishlist" : "Add to wishlist"} arrow>
+            <IconButton
+              onClick={handleFavoriteToggle}
+              size="small"
+              sx={{
+                background: 'rgba(255, 255, 255, 0.95)',
+                backdropFilter: 'blur(10px)',
+                WebkitBackdropFilter: 'blur(10px)',
+                boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  background: 'rgba(255, 255, 255, 1)',
+                  transform: 'scale(1.1)',
+                  animation: isFavorite ? `${heartBeat} 0.6s ease` : 'none',
+                }
+              }}
+            >
+              {isFavorite ? (
+                <Favorite sx={{ fontSize: 20, color: '#fa709a' }} />
+              ) : (
+                <FavoriteBorder sx={{ fontSize: 20, color: theme.palette.text.secondary }} />
+              )}
+            </IconButton>
+          </Tooltip>
+          
+          <Tooltip title="Compare" arrow>
+            <IconButton
+              size="small"
+              sx={{
+                background: 'rgba(255, 255, 255, 0.95)',
+                backdropFilter: 'blur(10px)',
+                WebkitBackdropFilter: 'blur(10px)',
+                boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  background: 'rgba(255, 255, 255, 1)',
+                  transform: 'scale(1.1)',
+                }
+              }}
+            >
+              <CompareArrows sx={{ fontSize: 20, color: theme.palette.text.secondary }} />
+            </IconButton>
+          </Tooltip>
+
+          <Tooltip title="Share" arrow>
+            <IconButton
+              size="small"
+              sx={{
+                background: 'rgba(255, 255, 255, 0.95)',
+                backdropFilter: 'blur(10px)',
+                WebkitBackdropFilter: 'blur(10px)',
+                boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  background: 'rgba(255, 255, 255, 1)',
+                  transform: 'scale(1.1)',
+                }
+              }}
+            >
+              <Share sx={{ fontSize: 20, color: theme.palette.text.secondary }} />
+            </IconButton>
+          </Tooltip>
+        </Stack>
       </Box>
 
-      {/* Product Image */}
+      {/* Enhanced Product Image */}
       <Box
         sx={{
           position: 'relative',
-          height: 240,
+          height: 280,
           overflow: 'hidden',
           background: theme.palette.mode === 'light'
             ? 'linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%)'
@@ -231,24 +334,25 @@ function ProductCard({ product }) {
             }}
           />
         )}
+        
         <CardMedia
           component="img"
           image={product.image}
           alt={product.title}
+          className="product-image"
           onLoad={() => setImageLoaded(true)}
           sx={{ 
             height: '100%',
             objectFit: 'contain',
             p: 3,
             transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-            transform: isHovered ? 'scale(1.1) rotate(2deg)' : 'scale(1)',
-            filter: isHovered ? 'brightness(1.1)' : 'brightness(1)',
             opacity: imageLoaded ? 1 : 0,
           }}
         />
 
-        {/* Quick View Overlay */}
+        {/* Enhanced Quick View Overlay */}
         <Box
+          className="product-overlay"
           sx={{
             position: 'absolute',
             bottom: 0,
@@ -258,8 +362,9 @@ function ProductCard({ product }) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            background: 'rgba(0, 0, 0, 0.6)',
+            background: 'rgba(0, 0, 0, 0.7)',
             backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
             opacity: isHovered ? 1 : 0,
             transition: 'opacity 0.3s ease',
             pointerEvents: isHovered ? 'auto' : 'none',
@@ -274,7 +379,7 @@ function ProductCard({ product }) {
               fontWeight: 700,
               textTransform: 'none',
               borderRadius: 3,
-              px: 3,
+              px: 4,
               py: 1.5,
               background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
               boxShadow: '0 8px 25px rgba(102, 126, 234, 0.5)',
@@ -291,7 +396,7 @@ function ProductCard({ product }) {
       </Box>
 
       <CardContent sx={{ flexGrow: 1, p: 3 }}>
-        {/* Category Chip */}
+        {/* Enhanced Category Chip */}
         <Chip 
           label={product.category}
           size="small"
@@ -300,7 +405,7 @@ function ProductCard({ product }) {
             textTransform: 'capitalize',
             fontWeight: 700,
             fontSize: '0.7rem',
-            height: 24,
+            height: 26,
             background: theme.palette.mode === 'light'
               ? alpha(theme.palette.primary.main, 0.1)
               : alpha(theme.palette.primary.main, 0.2),
@@ -315,7 +420,7 @@ function ProductCard({ product }) {
           }}
         />
 
-        {/* Product Title */}
+        {/* Enhanced Product Title */}
         <Typography 
           gutterBottom 
           variant="h6" 
@@ -323,7 +428,7 @@ function ProductCard({ product }) {
           to={`/product/${product.id}`}
           sx={{
             fontWeight: 700,
-            fontSize: '1rem',
+            fontSize: '1.1rem',
             lineHeight: 1.4,
             overflow: 'hidden',
             textOverflow: 'ellipsis',
@@ -344,7 +449,7 @@ function ProductCard({ product }) {
           {product.title}
         </Typography>
 
-        {/* Rating */}
+        {/* Enhanced Rating */}
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
           <Rating
             value={product.rating.rate}
@@ -355,6 +460,7 @@ function ProductCard({ product }) {
               mr: 1,
               '& .MuiRating-iconFilled': {
                 color: '#ffd700',
+                filter: 'drop-shadow(0 1px 2px rgba(255, 215, 0, 0.3))',
               }
             }}
           />
@@ -370,8 +476,8 @@ function ProductCard({ product }) {
           </Typography>
         </Box>
 
-        {/* Price Section */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        {/* Enhanced Price Section */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
           <Typography 
             variant="h5" 
             sx={{ 
@@ -396,13 +502,27 @@ function ProductCard({ product }) {
                 fontWeight: 600,
               }}
             >
-              ${(product.price * (1 + discount / 100)).toFixed(2)}
+              ${originalPrice.toFixed(2)}
             </Typography>
           )}
         </Box>
+
+        {/* Savings Indicator */}
+        {isOnSale && (
+          <Typography 
+            variant="caption" 
+            sx={{ 
+              color: 'success.main',
+              fontWeight: 700,
+              fontSize: '0.75rem',
+            }}
+          >
+            You save ${savings.toFixed(2)}!
+          </Typography>
+        )}
       </CardContent>
 
-      {/* Actions */}
+      {/* Enhanced Actions */}
       <CardActions 
         sx={{ 
           px: 3, 
@@ -439,8 +559,9 @@ function ProductCard({ product }) {
           <Button
             fullWidth
             variant="contained"
-            startIcon={<ShoppingCart />}
+            startIcon={isAddingToCart ? <Add className="animate-rotate" /> : <ShoppingCart />}
             onClick={handleAddToCart}
+            disabled={isAddingToCart}
             sx={{
               py: 1.2,
               fontWeight: 700,
@@ -452,8 +573,8 @@ function ProductCard({ product }) {
                 ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
                 : 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
               boxShadow: theme.palette.mode === 'light'
-                ? '0 4px 20px rgba(102, 126, 234, 0.4)'
-                : '0 4px 20px rgba(79, 172, 254, 0.4)',
+                ? '0 6px 25px rgba(102, 126, 234, 0.4)'
+                : '0 6px 25px rgba(79, 172, 254, 0.4)',
               transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
               position: 'relative',
               overflow: 'hidden',
@@ -470,15 +591,20 @@ function ProductCard({ product }) {
               '&:hover': {
                 transform: 'translateY(-2px)',
                 boxShadow: theme.palette.mode === 'light'
-                  ? '0 8px 30px rgba(102, 126, 234, 0.6)'
-                  : '0 8px 30px rgba(79, 172, 254, 0.6)',
+                  ? '0 12px 35px rgba(102, 126, 234, 0.6)'
+                  : '0 12px 35px rgba(79, 172, 254, 0.6)',
                 '&::before': {
                   left: '100%',
                 }
+              },
+              '&:disabled': {
+                background: theme.palette.action.disabled,
+                color: theme.palette.action.disabled,
+                animation: isAddingToCart ? `${glow} 1s ease-in-out infinite` : 'none',
               }
             }}
           >
-            Add to Cart
+            {isAddingToCart ? 'Adding...' : 'Add to Cart'}
           </Button>
         )}
       </CardActions>
